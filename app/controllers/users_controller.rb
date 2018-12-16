@@ -1,3 +1,5 @@
+require 'open-uri'
+
 class UsersController < ApplicationController
   before_action :set_user, only: [:show, :edit, :update, :destroy]
 
@@ -5,6 +7,7 @@ class UsersController < ApplicationController
   # GET /users.json
   def index
     @users = User.all
+    @hamic = open('https://hamic.ai/').read
   end
 
   # GET /users/1
