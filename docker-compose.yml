@@ -1,0 +1,48 @@
+version: '2'
+
+services:
+  app:
+    environment:
+      AWS_XRAY_TRACING_NAME: rails-xray-sample
+      AWS_XRAY_DAEMON_ADDRESS: "xray-daemon:2000"
+    build:
+      context: .
+      dockerfile: ./docker/rails/Dockerfile
+    volumes:
+      - .:/app
+    ports:
+      - "3000:3000"
+    command: bundle exec rails server -b '0.0.0.0' -p 3000
+    depends_on:
+      - db
+      - xray-daemon
+
+  db:
+    build: ./docker/mysql
+    ports:
+      - '3306:3306'
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+
+  xray-daemon:
+    environment:
+      - AWS_REGION=ap-northeast-1
+    build:
+      dockerfile: ./docker/xray/Dockerfile
+      context: .
+    volumes:
+      - ~/.aws/xray/:/root/.aws/:ro
+    ports:
+      - "2000:2000/udp"
+    command:
+      - "/usr/bin/xray"
+      - "--bind"
+      - "0.0.0.0:2000"
+      - "--region"
+      - "ap-northeast-1"
+      - "--buffer-memory"
+      - "64"
+      - "--log-level"
+      - dev
+      - "--log-file"
+      - "/dev/stdout"
